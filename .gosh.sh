@@ -5,7 +5,7 @@ function _g_varset {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <var>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     local var="$1"
@@ -20,7 +20,7 @@ function _g_varunset {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <var>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     local var="$1"
@@ -35,7 +35,7 @@ function _g_in_path {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <path>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     # PATH -> to array
@@ -56,7 +56,7 @@ function _g_add_path {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <path>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     if ! _g_in_path "$1"; then
@@ -69,7 +69,7 @@ function _g_rm_path {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <path>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     local new_path=
@@ -103,7 +103,7 @@ function default {
     if [ $# -ne 2 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <variable> <default value>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     if _g_varunset "$1"; then
@@ -127,13 +127,193 @@ function vdefault {
     if [ $# -ne 2 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <variable> <default value>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     if _g_varunset "$1"; then
         echo "Variable \"$1\" is being defaulted to \"$2\"."
         export $1="$2"
     fi
+}
+
+# Override the variable named $1 by setting it to $2.
+# This is mostly for consistency with the default function.
+# E.g.,
+#    override foo bar
+function override {
+    if [ $# -ne 2 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <variable> <override value>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    export $1="$2"
+}
+
+# Override the variable named $1 by setting it to $2,
+# and be verbose about it. This is a verbose variant of
+# the override function.
+# E.g.,
+#    voverride foo bar
+function voverride {
+    if [ $# -ne 2 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <variable> <override value>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    echo "Overriding variable \"$1\" and setting it to \"$2\"."
+    export $1="$2"
+}
+
+# Prepends $2 to the variable named $1. If $1 is not already set, it will be
+# set to $2.
+# E.g.,
+#    prepend PATH $(pwd)/bin
+function prepend {
+    if [ $# -ne 2 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <variable> <value>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    if _g_varunset "$1"; then
+        export $1="$2"
+    else
+        local current=$1
+        export $1="$2:${!current}"
+    fi
+}
+
+# Prepends $2 to the variable named $1, and be verbose about it. If $1 is not
+# already set, it will be set to $2.
+# E.g.,
+#    vprepend PATH $(pwd)/bin
+function vprepend {
+    if [ $# -ne 2 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <variable> <value>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    if _g_varunset "$1"; then
+        echo "Variable \"$1\" is being set to \"$2\"."
+        export $1="$2"
+    else
+        echo "Variable \"$1\" is being prepended with \"$2\"."
+        local current=$1
+        export $1="$2:${!current}"
+    fi
+}
+
+# Appends $2 to the variable named $1. If $1 is not already set, it will be
+# set to $2.
+# E.g.,
+#    append PATH $(pwd)/bin
+function append {
+    if [ $# -ne 2 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <variable> <value>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    if _g_varunset "$1"; then
+        export $1="$2"
+    else
+        local current=$1
+        export $1="${!current}:$2"
+    fi
+}
+
+# Prepends $2 to the variable named $1. If $1 is not already set, it will be
+# set to $2.
+# E.g.,
+#    prepend PATH $(pwd)/bin
+function vappend {
+    if [ $# -ne 2 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <variable> <value>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    if _g_varunset "$1"; then
+        echo "Variable \"$1\" is being set to \"$2\"."
+        export $1="$2"
+    else
+        echo "Variable \"$1\" is being appended to with \"$2\"."
+        local current=$1
+        export $1="$2:${!current}"
+    fi
+}
+
+# Returns 1 if the environment variable $1 is in PATH, 0 otherwise.
+# E.g.,
+#    in-path $HOME/bin
+function in-path {
+    if [ $# -ne 1 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <var>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    if [[ ":$PATH:" == *":$1:"* ]]; then
+        return 0
+    fi
+    return 1
+}
+
+# Returns 1 if the environment variable $1 is in PATH, 0 otherwise.
+# This is a verbose variant of the in-path function.
+# E.g.,
+#    vin-path $HOME/bin
+function vin-path {
+    if [ $# -ne 1 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <var>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    if [[ ":$PATH:" == *":$1:"* ]]; then
+        echo "PATH contains \"$1\"."
+        return 0
+    fi
+    echo "PATH does not contain \"$1\"."
+    return 1
+}
+
+# Returns 1 if the environment variable $1 is not in PATH, 0 otherwise.
+# E.g.,
+#    not-in-path $HOME/bin
+function not-in-path {
+    if [ $# -ne 1 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <var>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    if [[ ":$PATH:" == *":$1:"* ]]; then
+        return 1
+    fi
+    return 0
+}
+
+# Returns 1 if the environment variable $1 is not in PATH, 0 otherwise.
+# This is a verbose variant of the not-in-path function.
+# E.g.,
+#    vnot-in-path $HOME/bin
+function vnot-in-path {
+    if [ $# -ne 1 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <var>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    if [[ ":$PATH:" == *":$1:"* ]]; then
+        echo "PATH contains \"$1\"."
+        return 1
+    fi
+    echo "PATH does not contain \"$1\"."
+    return 0
 }
 
 # Returns 1 if the environment variable $1 is not set, 0 otherwise.
@@ -143,7 +323,7 @@ function assert-env {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <variable>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     if _g_varunset "$1"; then
@@ -160,7 +340,7 @@ function assert-env-or-die {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <variable>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     if _g_varunset "$1"; then
@@ -169,14 +349,14 @@ function assert-env-or-die {
     fi
 }
 
-# Prompts the user to set a variable if it does not have a default value.
+# Prompt the user to set a variable if it does not have a default value.
 # E.g.,
 #    prompt-env VERSION "VERSION is not set, please set it now: "
 function prompt-env {
     if [ $# -ne 2 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <variable> <prompt>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     if _g_varunset "$1"; then
@@ -186,6 +366,31 @@ function prompt-env {
             return 1
         fi
         export $1="$REPLY"
+    fi
+    return 0
+}
+
+# Prompt the user to set a variable if it does not have a default value, and
+# be verbose about it.
+# E.g.,
+#    vprompt-env VERSION "VERSION not set, please set it now: " "VERSION is: "
+function vprompt-env {
+    if [ $# -ne 3 ]; then
+        local me=FUNCNAME
+        echo "usage: ${!me} <variable> <prompt> <verbose>" >&2
+        echo "(got: $*)" >&2
+        exit 1
+    fi
+    if _g_varunset "$1"; then
+        read -p "$2" REPLY
+        if [ -z "$REPLY" ]; then
+            echo "no response" >&2
+            return 1
+        fi
+        export $1="$REPLY"
+    else
+        local current=$1
+        echo "${3}\"${!current}\"."
     fi
     return 0
 }
@@ -205,7 +410,7 @@ function assert-source {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <file>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     if [ -r "$1" ]; then
@@ -227,7 +432,7 @@ function require-cmd {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <command>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     _=$(which "$1" >/dev/null 2>&1)
@@ -245,7 +450,7 @@ function require-cmd-or-die {
     if [ $# -ne 1 ]; then
         local me=FUNCNAME
         echo "usage: ${!me} <command>" >&2
-        echo "(got: $@)" >&2
+        echo "(got: $*)" >&2
         exit 1
     fi
     _=$(which "$1" >/dev/null 2>&1)
@@ -270,4 +475,74 @@ function use-gosh-contrib-or-die {
     for contrib in "$GOSH_CONTRIB"/*.sh; do
         assert-source "$contrib" || exit 1
     done
+}
+
+# Returns 0 unless the $@ command fails. If the command fails, exit with a
+# status of 1. All stdout/stderr output from the command will be sent to
+# /dev/null.
+# E.g.,
+#    run-or-die /bin/false
+#    echo "This message will never be displayed."
+function run-or-die {
+    "$@" &>/dev/null
+    local RC=$?
+    [[ $RC -ne 0 ]] && exit 1
+    return 0
+}
+
+# Returns 0 unless the $@ command fails. If the command fails, exit with a
+# status of 1. All stdout/stderr output from the command will be buffered to a
+# temporary file. On failure, the buffer contents are displayed on stderr prior
+# to exiting. This is a verbose variant of the run-or-die function.
+# E.g.,
+#    vrun-or-die /bin/false
+#    echo "This message will never be displayed."
+function vrun-or-die {
+    echo "Running \"$@\"."
+    local buffile="$(mktemp)"
+    # open read mode FD to buffer
+    exec {tempR}<"$buffile"
+    # open write mode FD to buffer
+    exec {tempW}>"$buffile"
+    # delete it to avoid having to cleanup
+    rm "$buffile"
+
+    "$@" >&${tempW} 2>&${tempW}
+    local RC=$?
+
+    # check for nonzero exit status
+    if [ $RC -ne 0 ]; then
+        cat <&${tempR}
+        # close FDs; using '<' or '>' doesn't matter to bash...
+        exec {tempR}<&-
+        # ... but are specified to reflect read/write modes used
+        exec {tempW}>&-
+        exit 1
+    fi
+
+    # close FDs; using '<' or '>' doesn't matter to bash...
+    exec {tempR}<&-
+    # ... but are specified to reflect read/write modes used
+    exec {tempW}>&-
+    return 0
+}
+
+# Returns 0 unless $? is 0. Exit with a status of 1 if $? is nonzero. An
+# optional $1 argument can be provided to specify a different exit status.
+# E.g.,
+#    rslt=$(exit 42)
+#    if-failed-die 2
+#    # exit with status 2
+#
+#    rslt=$(exit 0)
+#    if-failed-die
+#    # no exit - previous command succeeds
+function if-failed-die {
+    local cmd_status=$?
+    local exit_code=1
+    if [ $# -eq 1 ]; then exit_code="$1"; fi
+    if [ "$cmd_status" -eq 0 ]; then
+        return 0
+    fi
+    exit $exit_code
 }
