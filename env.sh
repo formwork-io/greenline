@@ -33,7 +33,14 @@ default GL_RAIL_3_EGRESS        9009
 
 ### PATHS ###
 default BUILD           "$DIR"/build
+default src             "$DIR"/src
 default TEST_OUTPUT     "$BUILD/tests"
+default PKG_CONFIG_PATH "$BUILD"/deps/libs/lib/pkgconfig
+
+### VERSIONS ###
+default GL_SODIUM_VER   "1.0.11"
+default GL_ZEROMQ_VER   "4.1.5"
+default GL_CZMQ_VER     "3.0.2"
 
 ### GOLANG ###
 default GL_BUILD_ARGS   "-o $BUILD/greenline"
