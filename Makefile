@@ -8,8 +8,8 @@ libdepdir	= $(builddir)/deps/libs
 pkgdir		= $(depdir)/pkgs
 grnl_bin 	= $(builddir)/grnl
 grnlctl_bin = $(builddir)/grnlctl
-go_install 	= go install -v -pkgdir $(pkgdir)
-go_build 	= go build -v -pkgdir $(pkgdir)
+go_install 	= go install -v -x -pkgdir $(pkgdir)
+go_build 	= go build -v -x -pkgdir $(pkgdir)
 core_object = $(pkgdir)/github.com/formwork-io/greenline/src/core.a
 
 INSTALL			= /usr/bin/install
@@ -33,9 +33,9 @@ endif
 ifndef CFLAGS
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
-cflags = -L$(builddir)/deps/lib -lsodium -lzmq -lczmq -lstdc++
+cflags = -L$(libdepdir)/lib -lsodium -lzmq -lczmq -lstdc++
 else
-cflags = -L$(builddir)/deps/lib -lsodium -lzmq -lczmq -lstdc++ -static
+cflags = -L$(libdepdir)/lib -lsodium -lzmq -lczmq -lstdc++ -static
 endif
 else
 cflags = $(CFLAGS)
@@ -80,10 +80,12 @@ core-clean:
 	@rm -fv $(core_object)
 
 mostlyclean: clean ## Cleans the build and local packages
-	@rm -vfr $(pkgdir)
+	$(info Removing $(pkgdir))
+	@rm -fr $(pkgdir)
 
 distclean: clean ## Cleans everything
-	@rm -vfr $(builddir)
+	$(info Removing $(builddir))
+	@rm -fr $(builddir)
 
 install: grnl grnlctl ## Installs the binaries
 	@# see Makefile install command categories
