@@ -55,7 +55,7 @@ $(libdepdir)/.done: env.sh scripts/get-lib-deps.sh
 libdeps: $(libdepdir)/.done ## Get library dependencies via get-lib-deps.sh
 
 $(grnl_bin): src/grnl/*.go $(core_object)
-	cd src/grnl && $(go_build) $(go_ldflags) -o $(@) 
+	cd src/grnl && $(go_build) $(go_ldflags) -o $(@)
 	@touch $(@)
 grnl: $(grnl_bin) ## Builds the grnl binary
 
