@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 
 # The next three lines are for the go shell.
 export SCRIPT_NAME="make-loop"
