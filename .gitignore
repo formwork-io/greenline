@@ -5,4 +5,4 @@
 env.sh.custom
 
 # ignore build dir
-# build
+build
