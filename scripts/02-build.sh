@@ -10,11 +10,5 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"/../
 source "$DIR"/env.sh || exit 1
 cd "$DIR" || exit 1
 
-CMD="go build"
-which colorgo >/dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "[BUILDING]"
-    CMD="colorgo build"
-fi
-$CMD $GL_BUILD_ARGS && echo "[COMPLETE]"
+make
 
