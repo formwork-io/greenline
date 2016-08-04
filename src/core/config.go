@@ -21,7 +21,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 See http://formwork-io.github.io/ for more.
 */
 
-package grlcore
+package grnlcore
 
 import "errors"
 import "fmt"

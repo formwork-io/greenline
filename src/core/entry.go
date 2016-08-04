@@ -19,7 +19,7 @@
 //
 // See http://formwork-io.github.io/ for more.
 
-package grlcore
+package grnlcore
 
 import (
 	"os"

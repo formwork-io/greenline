@@ -21,31 +21,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 See http://formwork-io.github.io/ for more.
 */
 
-package grlcore
+package grnlcore
 
 import "fmt"
 import "os"
-import "time"
-
-func makeMsg(msg string, args ...interface{}) string {
-	const layout = "%d%02d%02d-%02d-%02d-%02d greenline[%d]: %s"
-	now := time.Now()
-	year := now.Year()
-	month := now.Month()
-	day := now.Day()
-	hour := now.Hour()
-	minute := now.Minute()
-	seconds := now.Second()
-	pid := os.Getpid()
-	arg := fmt.Sprintf(msg, args...)
-	ret := fmt.Sprintf(layout, year, month, day, hour, minute, seconds, pid, arg)
-	return ret
-}
-
-func pprint(msg string, args ...interface{}) {
-	msg = makeMsg(msg, args...)
-	fmt.Fprintf(os.Stdout, msg+"\n")
-}
 
 func out(msg string, args ...interface{}) {
 	msg = makeMsg(msg, args...)

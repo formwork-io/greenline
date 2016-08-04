@@ -19,7 +19,7 @@
 //
 // See http://formwork-io.github.io/ for more.
 
-package grlcore
+package grnlcore
 
 import (
 	"fsnotify-1.3.1"
@@ -55,7 +55,7 @@ func reloader(reload chan int) {
 	if err != nil {
 		die("failed getting path to binary (%s)", err.Error())
 	}
-	pprint("monitoring %s", bindir)
+	Print("monitoring %s", bindir)
 	me := Arg0Base()
 	err = watcher.Add(bindir)
 	if err != nil {
@@ -74,7 +74,7 @@ func reloader(reload chan int) {
 			die("failed watching configuration (%s)", err.Error())
 		}
 		cfgdir = cfgdir[:len(cfgdir)-1]
-		pprint("monitoring %s", cfgdir)
+		Print("monitoring %s", cfgdir)
 		watchcfg = true
 	}
 
