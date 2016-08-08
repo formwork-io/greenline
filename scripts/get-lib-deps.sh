@@ -82,7 +82,9 @@ czmq_work="$work_root-czmq"
 mkdir -p "$czmq_work"
 cd "$czmq_work"
 extract "czmq" "$GL_CZMQ_VER" "$czmq_tgz"
+export CPPFLAGS="-Wno-deprecated-declarations"
 cmmi "czmq" "$GL_CZMQ_VER" "$czmq_work"
+unset CPPFLAGS
 
 touch "$gl_lib_deps"/.done
 
