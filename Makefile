@@ -15,6 +15,7 @@ core_object = $(pkgdir)/github.com/formwork-io/greenline/src/core.a
 INSTALL			= /usr/bin/install
 INSTALL_PROGRAM	= $(INSTALL)
 
+export GOPATH = $(top)
 SHELL := /usr/bin/env bash
 
 check_defined = \
@@ -23,8 +24,6 @@ check_defined = \
 __check_defined = \
     $(if $(value $1),, \
       $(error Undefined $1$(if $2, ($2))))
-
-$(call check_defined, GOPATH)
 
 ifndef PKG_CONFIG_PATH
 export PKG_CONFIG_PATH = $(libdepdir)/lib/pkgconfig
