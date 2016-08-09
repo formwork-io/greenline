@@ -10,7 +10,7 @@ grnl_bin 	= $(builddir)/grnl
 grnlctl_bin = $(builddir)/grnlctl
 go_install 	= go install -v -x -pkgdir $(pkgdir)
 go_build 	= go build -v -x -pkgdir $(pkgdir)
-core_object = $(pkgdir)/github.com/formwork-io/greenline/src/core.a
+core_object = $(pkgdir)/core.a
 
 INSTALL			= /usr/bin/install
 INSTALL_PROGRAM	= $(INSTALL)
@@ -70,21 +70,19 @@ core: $(core_object) ## Builds the core code
 clean: grnlctl-clean grnl-clean core-clean ## Cleans the build
 
 grnlctl-clean:
-	@rm -fv $(grnlctl_bin)
+	-rm -f $(grnlctl_bin)
 
 grnl-clean:
-	@rm -fv $(grnl_bin)
+	-rm -f $(grnl_bin)
 
 core-clean:
-	@rm -fv $(core_object)
+	-rm -f $(core_object)
 
 mostlyclean: clean ## Cleans the build and local packages
-	$(info Removing $(pkgdir))
-	@rm -fr $(pkgdir)
+	-rm -fr $(pkgdir)
 
-distclean: clean ## Cleans everything
-	$(info Removing $(builddir))
-	@rm -fr $(builddir)
+distclean: ## Cleans everything
+	-rm -fr $(builddir)
 
 install: grnl grnlctl ## Installs the binaries
 	@# see Makefile install command categories
@@ -99,7 +97,7 @@ install-strip: ## Installs stripped versions of the binaries
 		$(grnl_bin) $(grnlctl_bin) $(DESTDIR)$(bindir)
 
 uninstall: ## Uninstalls the binaries
-	@rm -fv $(DESTDIR)$(bindir)/grnl \
+	-rm -f $(DESTDIR)$(bindir)/grnl \
 		    $(DESTDIR)$(bindir)/grnlctl
 
 .PHONY: clean distclean grnlctl-clean grnl-clean core-clean help install \
