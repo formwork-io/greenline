@@ -4,5 +4,6 @@
 # ignore the go shell custom env
 env.sh.custom
 
-# ignore build dir
 build
+pkg
+
