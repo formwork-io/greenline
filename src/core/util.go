@@ -22,17 +22,7 @@
 package grnlcore
 
 import "runtime"
-
-// Executable is the complete path to the process executable.
-//
-// path: absolute path to process executable
-// base: last element of path
-// dir: all but the last element of the path
-type Executable struct {
-	path string
-	base string
-	dir  string
-}
+import "time"
 
 // Prlvalue calls Out with the %v value format for arg.
 func Prlvalue(arg interface{}) {
@@ -65,4 +55,9 @@ func DieOnErr(err error) {
 		_, file, line, _ := runtime.Caller(1)
 		Die("Die: %s:%d %s\n", file, line, err.Error())
 	}
+}
+
+// SleepMs sleeps for the specified number of milliseconds.
+func SleepMs(ms time.Duration) {
+	time.Sleep(time.Millisecond * ms)
 }
