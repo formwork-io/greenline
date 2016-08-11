@@ -136,10 +136,10 @@ func getenv(env string) (string, error) {
 func asPort(env string) (int, error) {
 	port, err := strconv.Atoi(env)
 	if err != nil {
-		die("invalid port: %s", env)
+		Die("invalid port: %s", env)
 		return -1, fmt.Errorf("invalid port: %v - %s", env, err.Error())
 	} else if port < 1 || port > 65535 {
-		die("invalid port: %s", env)
+		Die("invalid port: %s", env)
 		return -1, fmt.Errorf("invalid port: %v - %s", env, err.Error())
 	}
 	return port, nil
