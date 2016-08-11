@@ -43,17 +43,12 @@ func DisablePrinting() { printing = false }
 func EnablePrinting() { printing = true }
 
 func makeMsg(msg string, args ...interface{}) string {
-	const layout = "%d%02d%02d-%02d-%02d-%02d greenline[%d]: %s"
+	const layout = "grnl[%d]: %02d:%02d:%02d.%d: %s\n"
 	now := time.Now()
-	year := now.Year()
-	month := now.Month()
-	day := now.Day()
-	hour := now.Hour()
-	minute := now.Minute()
-	seconds := now.Second()
+	h, m, s, ns := now.Hour(), now.Minute(), now.Second(), now.Nanosecond()
 	pid := os.Getpid()
 	arg := fmt.Sprintf(msg, args...)
-	ret := fmt.Sprintf(layout, year, month, day, hour, minute, seconds, pid, arg)
+	ret := fmt.Sprintf(layout, pid, h, m, s, ns, arg)
 	return ret
 }
 
