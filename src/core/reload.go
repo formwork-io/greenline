@@ -21,87 +21,44 @@
 
 package grnlcore
 
-import (
-	"fsnotify-1.3.1"
-	"os"
-	"path/filepath"
-	"syscall"
-)
+import "os"
+import fsn "fsnotify-1.3.1"
+import "syscall"
 
-const (
-	ConfigReload = 1 << iota
-
-	BinReload = 1 << iota
-)
-
-func isReloadEvent(event fsnotify.Event) bool {
-	if event.Op&fsnotify.Create == fsnotify.Create {
-		return true
-	}
-	if event.Op&fsnotify.Write == fsnotify.Write {
-		return true
-	}
-	return false
-}
-
-func reloader(reload chan int) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		die("failed creating watcher (%s)", err.Error())
-	}
-	defer watcher.Close()
-
-	bindir, err := Arg0Dir()
-	if err != nil {
-		die("failed getting path to binary (%s)", err.Error())
-	}
-	Print("monitoring %s", bindir)
-	me := Arg0Base()
-	err = watcher.Add(bindir)
-	if err != nil {
-		die("failed watching binary (%s)", err.Error())
-	}
-	watchcfg := false
-	cfgfile, cfgdir := "", ""
-	if len(os.Args) == 2 {
-		cfgpath, err := CfgPath()
-		if err != nil {
-			die("error getting configuration path (%s)", err.Error())
-		}
-		cfgdir, cfgfile = filepath.Split(cfgpath)
-		err = watcher.Add(cfgdir)
-		if err != nil {
-			die("failed watching configuration (%s)", err.Error())
-		}
-		cfgdir = cfgdir[:len(cfgdir)-1]
-		Print("monitoring %s", cfgdir)
-		watchcfg = true
-	}
-
+// Reloader ...
+func Reloader(reload chan int) {
+	watcher := (FirstOrDie(fsn.NewWatcher())).(*fsn.Watcher)
+	exe := BinPath()
+	Print("monitoring %s", exe.dir)
+	DieOnErr(watcher.Add(exe.dir))
 	for {
 		select {
 		case event := <-watcher.Events:
-			if isReloadEvent(event) {
-				dir, base := filepath.Split(event.Name)
-				dir = dir[:len(dir)-1]
-				if dir == bindir && base == me {
-					reload <- BinReload
-				} else if watchcfg && dir == cfgdir && base == cfgfile {
-					reload <- ConfigReload
-				}
+			Out("I/O on %s (op %d)", event.Name, event.Op)
+			if event.Name != exe.path {
+				continue
 			}
+			if event.Op&fsn.Remove == fsn.Remove ||
+				event.Op&fsn.Rename == fsn.Rename {
+				continue
+			}
+			Out("restarting")
+			watcher.Remove(exe.dir)
+			watcher.Close()
+			reload <- 0
+			return
 		case err := <-watcher.Errors:
-			die("failed gettiing events (%s)", err.Error())
+			Die("failed gettiing events (%s)", err.Error())
 		}
 	}
 }
 
-func restart() (err error) {
-	err = syscall.Exec(os.Args[0], os.Args, os.Environ())
-	if err != nil {
-		die("failed restarting greenline")
-	}
-	return
+// Restart ...
+func Restart() {
+	argv0 := os.Args[0]
+	argv := os.Args
+	env := os.Environ()
+	DieOnErr(syscall.Exec(argv0, argv, env))
 }
 
 // vim: ts=4 noexpandtab
