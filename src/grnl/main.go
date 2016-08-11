@@ -36,34 +36,56 @@ func main() {
 		"This is free software with ABSOLUTELY NO WARRANTY."
 	fmt.Printf("%s\n--\n", info)
 	cr.Out("greenline alive")
+	cr.Configure()
+
+	// migrate signal/handler out and into core
 	exitchan := make(chan os.Signal, 0)
 	signal.Notify(exitchan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	go func() {
-		sig := <-exitchan
-        if sig == nil {
-            return
-        }
-		cr.Out("got %s, exiting", sig.String())
-		os.Exit(0)
-	}()
 
 	reloadchan := make(chan int)
-	go cr.Reloader(reloadchan)
+	if cr.Cfg.Reload {
+		cr.Out("restart enabled; don't panic")
+		go cr.Reloader(reloadchan)
+	}
 	cr.Out("greenline ready")
 	router := cr.FirstOrDie(goczmq.NewRouter("tcp://*:5555")).(*goczmq.Sock)
 	defer router.Destroy()
 
 	cr.Out("router created and bound")
+
+	var restarting = false
+
+For:
 	for {
 		select {
+		case sig := <-exitchan:
+			if sig == nil {
+				continue
+			}
+			if sig == syscall.SIGQUIT {
+				cr.Out("exiting immediately on signal (%s)", sig.String())
+				os.Exit(1)
+			}
+			cr.Out("initiating graceful shutdown on signal (%s)", sig.String())
+			break For
 		case _ = <-reloadchan:
 			cr.Out("new binary available, restarting greenline")
-			cr.Out("RESART NOW")
-	        signal.Stop(exitchan)
-			router.Destroy()
-			close(exitchan)
-			close(reloadchan)
-			cr.Restart()
+			restarting = true
+			break For
 		}
 	}
+
+	signal.Stop(exitchan)
+	router.Destroy()
+	goczmq.Shutdown()
+	close(exitchan)
+	close(reloadchan)
+
+	if restarting {
+		// sleep a moment before restarting
+		cr.SleepMs(250)
+		cr.Restart()
+	}
+	cr.Out("and the rest, after a sudden wet thud, was silence")
+	os.Exit(0)
 }
