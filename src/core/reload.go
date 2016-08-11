@@ -31,10 +31,10 @@ func Reloader(reload chan int) {
 	exe := BinPath()
 	Print("monitoring %s", exe.dir)
 	DieOnErr(watcher.Add(exe.dir))
+For:
 	for {
 		select {
 		case event := <-watcher.Events:
-			Out("I/O on %s (op %d)", event.Name, event.Op)
 			if event.Name != exe.path {
 				continue
 			}
@@ -42,15 +42,14 @@ func Reloader(reload chan int) {
 				event.Op&fsn.Rename == fsn.Rename {
 				continue
 			}
-			Out("restarting")
-			watcher.Remove(exe.dir)
-			watcher.Close()
-			reload <- 0
-			return
+			Out("I/O on %s (op %d)", event.Name, event.Op)
+			break For
 		case err := <-watcher.Errors:
 			Die("failed gettiing events (%s)", err.Error())
 		}
 	}
+	watcher.Close()
+	reload <- 0
 }
 
 // Restart ...
