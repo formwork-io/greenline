@@ -23,109 +23,46 @@ See http://formwork-io.github.io/ for more.
 
 package grnlcore
 
-import "errors"
-import "fmt"
+import "flag"
 import "os"
 import "strconv"
-import "strings"
+import "fmt"
 
-// Rail ...
-type Rail struct {
-	Name     string
-	Protocol string
-	Ingress  int
-	Egress   int
+// GreenlineConfig contains the configuration.
+type GreenlineConfig struct {
+	Reload  bool
+	Print   bool
+	Logfile string
 }
 
-// Rails ...
-type Rails struct {
-	rail []Rail
-}
+// Cfg contains the greenline configuration.
+var Cfg GreenlineConfig
 
-// ReadEnvironment ...
-func ReadEnvironment() ([]Rail, error) {
-	nameTemplate := "GL_RAIL_%d_NAME"
-	protocolTemplate := "GL_RAIL_%d_PROTOCOL"
-	ingressTemplate := "GL_RAIL_%d_INGRESS"
-	egressTemplate := "GL_RAIL_%d_EGRESS"
+// Configure ...
+func Configure() {
+	flag.BoolVar(&Cfg.Reload, "restart", false, "enable restart on updates")
+	flag.BoolVar(&Cfg.Print, "print", true, "enable console output")
+	flag.StringVar(&Cfg.Logfile, "logfile", "", "enable logging to file")
+	flag.Parse()
 
-	var rails []Rail
-	index := 0
-	for {
-		name, err := getenv(fmt.Sprintf(nameTemplate, index))
-		if err != nil {
-			if index != 0 {
-				break
-			}
-			return nil, err
-		}
-		if name == "" {
-			break
-		}
-
-		protocol, err := getenv(fmt.Sprintf(protocolTemplate, index))
-		if err != nil {
-			return nil, err
-		}
-		ingressStr, err := getenv(fmt.Sprintf(ingressTemplate, index))
-		if err != nil {
-			return nil, err
-		}
-		egressStr, err := getenv(fmt.Sprintf(egressTemplate, index))
-		if err != nil {
-			return nil, err
-		}
-		ingress, err := asPort(ingressStr)
-		if err != nil {
-			return nil, err
-		}
-		egress, err := asPort(egressStr)
-		if err != nil {
-			return nil, err
-		}
-
-		rails = append(rails, Rail{
-			Name:     name,
-			Protocol: protocol,
-			Ingress:  ingress,
-			Egress:   egress,
-		})
-
-		index++
+	if Cfg.Reload {
+		Out("restart enabled; don't panic")
+	} else {
+		Out("restart disabled; buckle up Mr. Safety")
 	}
-
-	_, err := validateRails(rails)
-	if err != nil {
-		return nil, fmt.Errorf("configuration file error: " + err.Error())
+	if Cfg.Print {
+		Out("console output enabled; no turning back now")
+	} else {
+		Out("console output disabled; applying tape to mouth")
 	}
-
-	return rails, nil
+	if Cfg.Logfile != "" {
+		Out("logging enabled; plant a tree in reparations (%s)", Cfg.Logfile)
+	} else {
+		Out("logging disabled; enjoy the trees")
+	}
 }
 
-func validProtocol(protocol string) bool {
-	switch protocol {
-	case "broadcast":
-		return true
-	case "request":
-		return true
-	}
-	return false
-}
-
-func validateRails(rails []Rail) (*Rail, error) {
-	for i, rail := range rails {
-		protocol := strings.ToLower(rail.Protocol)
-		if !validProtocol(protocol) {
-			msg := fmt.Sprintf("%s: unsupported rail type", rail.Protocol)
-			return &rail, errors.New(msg)
-		}
-		rails[i].Protocol = protocol
-	}
-
-	return nil, nil
-}
-
-func getenv(env string) (string, error) {
+func getenv(env string, dflt interface{}) (string, error) {
 	_env := os.Getenv(env)
 	if len(_env) == 0 {
 		return "", fmt.Errorf("no %s is set", env)
