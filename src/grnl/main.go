@@ -47,11 +47,30 @@ func main() {
 		cr.Out("restart enabled; don't panic")
 		go cr.Reloader(reloadchan)
 	}
-	cr.Out("greenline ready")
-	router := cr.FirstOrDie(goczmq.NewRouter("tcp://*:5555")).(*goczmq.Sock)
-	defer router.Destroy()
+	if cr.Cfg.LogFile != "" {
+		cr.Out("enabling logging to %s", cr.Cfg.LogFile)
+		cr.EnableLogging(cr.Cfg.LogFile)
+	}
+	cr.Out("configured %d rails", cr.Cfg.NrRails)
+	for i := 0; i < cr.Cfg.NrRails; i++ {
+		in := cr.Cfg.Incoming[i]
+		out := cr.Cfg.Outgoing[i]
+		cr.Out("rail #%d: %s ==> %s", i, in, out)
+	}
 
-	cr.Out("router created and bound")
+	if !cr.Cfg.Print {
+		cr.Out("disabling printing, no other output will be shown")
+		cr.DisablePrinting()
+	}
+	cr.Out("greenline ready")
+
+	for i := 0; i < cr.Cfg.NrRails; i++ {
+		in := cr.Cfg.Incoming[i]
+		out := cr.Cfg.Outgoing[i]
+		inSock := cr.FirstOrDie(goczmq.NewPull(in)).(*goczmq.Sock)
+		outSock := cr.FirstOrDie(goczmq.NewPush(out)).(*goczmq.Sock)
+		go handleRail(inSock, outSock)
+	}
 
 	var restarting = false
 
@@ -76,10 +95,10 @@ For:
 	}
 
 	signal.Stop(exitchan)
-	router.Destroy()
 	goczmq.Shutdown()
 	close(exitchan)
 	close(reloadchan)
+	cr.ShutdownLogging()
 
 	if restarting {
 		// sleep a moment before restarting
@@ -88,4 +107,15 @@ For:
 	}
 	cr.Out("and the rest, after a sudden wet thud, was silence")
 	os.Exit(0)
+}
+
+func handleRail(pull *goczmq.Sock, push *goczmq.Sock) {
+	for {
+		frame, flag, err := pull.RecvFrame()
+		if err != nil {
+			// TODO suppress
+			cr.Die("Die: %s", err.Error())
+		}
+		push.SendFrame(frame, flag)
+	}
 }
