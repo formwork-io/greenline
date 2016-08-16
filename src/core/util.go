@@ -26,7 +26,7 @@ import "time"
 
 // Prlvalue calls Out with the %v value format for arg.
 func Prlvalue(arg interface{}) {
-	Out("%v\n", arg)
+	Out("%v", arg)
 }
 
 // FirstOrDie returns the first argument or calls Die if err is non-nil.
@@ -34,9 +34,17 @@ func FirstOrDie(first interface{}, err error) interface{} {
 	if err == nil {
 		return first
 	}
-	_, file, line, _ := runtime.Caller(0)
-	Die("Die: %s:%d %s\n", file, line, err.Error())
+	_, file, line, _ := runtime.Caller(1)
+	Die("Die: %s:%d %s", file, line, err.Error())
 	panic("Die()")
+}
+
+// FirstOrZStr returns the first argument or the zero string if err is non-nil.
+func FirstOrZStr(first interface{}, err error) interface{} {
+	if err == nil {
+		return first
+	}
+	return ""
 }
 
 // SecondOrDie returns the second argument or calls Die if err is non-nil.
@@ -44,8 +52,8 @@ func SecondOrDie(err error, second interface{}) interface{} {
 	if err == nil {
 		return second
 	}
-	_, file, line, _ := runtime.Caller(0)
-	Die("Die: %s:%d %s\n", file, line, err.Error())
+	_, file, line, _ := runtime.Caller(1)
+	Die("Die: %s:%d %s", file, line, err.Error())
 	panic("Die()")
 }
 
@@ -53,7 +61,7 @@ func SecondOrDie(err error, second interface{}) interface{} {
 func DieOnErr(err error) {
 	if err != nil {
 		_, file, line, _ := runtime.Caller(1)
-		Die("Die: %s:%d %s\n", file, line, err.Error())
+		Die("Die: %s:%d %s", file, line, err.Error())
 	}
 }
 
