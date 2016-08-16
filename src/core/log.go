@@ -25,16 +25,32 @@ package grnlcore
 
 import "fmt"
 import "os"
+import "log"
 import "time"
 
 var logging = false
 var printing = true
+var logFile *os.File
 
 // DisableLogging disables logging.
 func DisableLogging() { logging = false }
 
 // EnableLogging enables logging.
-func EnableLogging() { logging = true }
+func EnableLogging(path string) {
+	flags := os.O_RDWR | os.O_CREATE | os.O_APPEND
+	mode := os.FileMode(0660)
+	logFile = FirstOrDie(os.OpenFile(path, flags, mode)).(*os.File)
+	log.SetOutput(logFile)
+	logging = true
+}
+
+// ShutdownLogging shuts down logging.
+func ShutdownLogging() {
+	if logging {
+		DisableLogging()
+		logFile.Close()
+	}
+}
 
 // DisablePrinting disables printing.
 func DisablePrinting() { printing = false }
@@ -69,6 +85,8 @@ func Log(msg string, args ...interface{}) {
 	if !logging {
 		return
 	}
+	msg = makeMsg(msg, args...)
+	log.Printf(msg)
 }
 
 // Out calls Print and Log with the arguments and calls os.Exit(1).
@@ -79,7 +97,9 @@ func Out(msg string, args ...interface{}) {
 
 // Die calls Print and Log with the arguments and calls os.Exit(1).
 func Die(msg string, args ...interface{}) {
-	Print(msg, args...)
 	Log(msg, args...)
+	msg = makeMsg(msg, args...)
+	fmt.Fprintf(os.Stderr, msg)
+	os.Stderr.Sync()
 	os.Exit(1)
 }
