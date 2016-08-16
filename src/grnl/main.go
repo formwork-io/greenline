@@ -64,11 +64,15 @@ func main() {
 	}
 	cr.Out("greenline ready")
 
+	var sockets = make([]*goczmq.Sock, 0)
+
 	for i := 0; i < cr.Cfg.NrRails; i++ {
 		in := cr.Cfg.Incoming[i]
 		out := cr.Cfg.Outgoing[i]
 		inSock := cr.FirstOrDie(goczmq.NewPull(in)).(*goczmq.Sock)
+		sockets = append(sockets, inSock)
 		outSock := cr.FirstOrDie(goczmq.NewPush(out)).(*goczmq.Sock)
+		sockets = append(sockets, outSock)
 		go handleRail(inSock, outSock)
 	}
 
@@ -95,6 +99,9 @@ For:
 	}
 
 	signal.Stop(exitchan)
+	for _, socket := range sockets {
+		socket.Destroy()
+	}
 	goczmq.Shutdown()
 	close(exitchan)
 	close(reloadchan)
@@ -113,8 +120,7 @@ func handleRail(pull *goczmq.Sock, push *goczmq.Sock) {
 	for {
 		frame, flag, err := pull.RecvFrame()
 		if err != nil {
-			// TODO suppress
-			cr.Die("Die: %s", err.Error())
+			return
 		}
 		push.SendFrame(frame, flag)
 	}
