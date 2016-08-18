@@ -23,54 +23,11 @@ See http://formwork-io.github.io/ for more.
 
 package main
 
-import "fmt"
-import "log"
-import "os"
-import "time"
-import "goczmq-1.0"
+import cr "core"
 
 func main() {
 	info := "greenline: notoriously unreliable\n" +
 		"https://github.com/formwork-io/greenline\n" +
 		"This is free software with ABSOLUTELY NO WARRANTY."
-	fmt.Printf("%s\n--\n", info)
-	/*
-		var rails []Rail
-		var err error
-		rails, err = ReadEnvironment()
-		if err != nil {
-			die(err.Error())
-		}
-		pprint("configuring %d rails", len(rails))
-	*/
-
-	pprint("grnlctl alive")
-	router, err := goczmq.NewRouter("tcp://*:5555")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer router.Destroy()
-	log.Println("router created and bound")
+	cr.Out("%s\n--", info)
 }
-
-func makeMsg(msg string, args ...interface{}) string {
-	const layout = "%d%02d%02d-%02d-%02d-%02d greenline[%d]: %s"
-	now := time.Now()
-	year := now.Year()
-	month := now.Month()
-	day := now.Day()
-	hour := now.Hour()
-	minute := now.Minute()
-	seconds := now.Second()
-	pid := os.Getpid()
-	arg := fmt.Sprintf(msg, args...)
-	ret := fmt.Sprintf(layout, year, month, day, hour, minute, seconds, pid, arg)
-	return ret
-}
-
-func pprint(msg string, args ...interface{}) {
-	msg = makeMsg(msg, args...)
-	fmt.Fprintf(os.Stdout, msg+"\n")
-}
-
-// vim: ts=4 noexpandtab
