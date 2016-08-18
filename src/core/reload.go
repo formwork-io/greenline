@@ -25,8 +25,13 @@ import "os"
 import fsn "fsnotify-1.3.1"
 import "syscall"
 
-// Reloader ...
-func Reloader(reload chan int) {
+// ReloadingConfiguration contains the reloading configuration.
+type ReloadingConfiguration struct {
+	Enabled       bool
+	ReloadChannel chan int
+}
+
+func reloader(reload chan int) {
 	watcher := (FirstOrDie(fsn.NewWatcher())).(*fsn.Watcher)
 	exe := BinPath()
 	Print("monitoring %s", exe.dir)
@@ -52,12 +57,26 @@ For:
 	reload <- 0
 }
 
-// Restart ...
+// ConfigureReloading configures reloading.
+func ConfigureReloading(cfg *GreenlineConfig) *ReloadingConfiguration {
+	channel := make(chan int, 0)
+	rc := ReloadingConfiguration{cfg.Reload, channel}
+	if cfg.Reload {
+		Out("restart enabled; don't panic")
+		go reloader(channel)
+	}
+	return &rc
+}
+
+// ShutdownReloading shuts down reloading.
+func ShutdownReloading(cfg *ReloadingConfiguration) {
+	close(cfg.ReloadChannel)
+}
+
+// Restart restarts the daemon.
 func Restart() {
 	argv0 := os.Args[0]
 	argv := os.Args
 	env := os.Environ()
 	DieOnErr(syscall.Exec(argv0, argv, env))
 }
-
-// vim: ts=4 noexpandtab

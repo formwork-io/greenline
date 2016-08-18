@@ -27,9 +27,10 @@ import "fmt"
 import "os"
 import "log"
 import "time"
+import "strconv"
 
-var logging = false
 var printing = true
+var logging = false
 var logFile *os.File
 
 // DisableLogging disables logging.
@@ -42,6 +43,18 @@ func EnableLogging(path string) {
 	logFile = FirstOrDie(os.OpenFile(path, flags, mode)).(*os.File)
 	log.SetOutput(logFile)
 	logging = true
+}
+
+// ConfigureLogging configures logging.
+func ConfigureLogging(cfg GreenlineConfig) {
+	if cfg.LogFile != "" {
+		Out("enabling logging to %s", Cfg.LogFile)
+		EnableLogging(cfg.LogFile)
+	}
+	if !cfg.Print {
+		Out("disabling printing, no other output will be shown")
+		DisablePrinting()
+	}
 }
 
 // ShutdownLogging shuts down logging.
@@ -59,9 +72,10 @@ func DisablePrinting() { printing = false }
 func EnablePrinting() { printing = true }
 
 func makeMsg(msg string, args ...interface{}) string {
-	const layout = "grnl[%d]: %02d:%02d:%02d.%d: %s\n"
+	const layout = "grnl[%d]: %02d:%02d:%02d.%s: %s\n"
 	now := time.Now()
-	h, m, s, ns := now.Hour(), now.Minute(), now.Second(), now.Nanosecond()
+	ns := (fmt.Sprintf("%4s", strconv.Itoa(now.Nanosecond())))[0:4]
+	h, m, s := now.Hour(), now.Minute(), now.Second()
 	pid := os.Getpid()
 	arg := fmt.Sprintf(msg, args...)
 	ret := fmt.Sprintf(layout, pid, h, m, s, ns, arg)
@@ -92,10 +106,16 @@ func Log(msg string, args ...interface{}) {
 // Out calls Print and Log with the arguments and calls os.Exit(1).
 func Out(msg string, args ...interface{}) {
 	Print(msg, args...)
-	Log(msg, args...)
 }
 
-// Die calls Print and Log with the arguments and calls os.Exit(1).
+// Outerr prints the arguments to stderr similar to fmt.Printf.
+func Outerr(msg string, args ...interface{}) {
+	msg = makeMsg(msg, args...)
+	fmt.Fprintf(os.Stderr, msg)
+	os.Stderr.Sync()
+}
+
+// Die calls Print with the arguments and calls os.Exit(1).
 func Die(msg string, args ...interface{}) {
 	Log(msg, args...)
 	msg = makeMsg(msg, args...)

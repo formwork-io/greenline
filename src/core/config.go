@@ -69,9 +69,8 @@ type GreenlineConfig struct {
 // Cfg contains the greenline configuration.
 var Cfg GreenlineConfig
 
-// Configure ...
-func Configure() {
-
+// Configure configures the process.
+func Configure() GreenlineConfig {
 	// Apply the default configuration
 	Cfg.Print = true
 	Cfg.Reload = true
@@ -88,6 +87,7 @@ func Configure() {
 		Out("configuring via redis")
 		configureViaRedis()
 	}
+	return Cfg
 }
 
 func configureViaEnv() {
@@ -146,6 +146,7 @@ func configureViaRedis() {
 	if reload == "0" {
 		Cfg.Reload = false
 	}
+
 }
 
 func configureRails(setting string) {
