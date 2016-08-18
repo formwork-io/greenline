@@ -24,9 +24,7 @@ See http://formwork-io.github.io/ for more.
 package main
 
 import "os"
-import "os/signal"
-import "fmt"
-import "syscall"
+import "sync"
 import "goczmq-1.0"
 import cr "core"
 
@@ -34,81 +32,88 @@ func main() {
 	info := "greenline: notoriously unreliable\n" +
 		"https://github.com/formwork-io/greenline\n" +
 		"This is free software with ABSOLUTELY NO WARRANTY."
-	fmt.Printf("%s\n--\n", info)
+	cr.Out("%s\n--", info)
 	cr.Out("greenline alive")
-	cr.Configure()
 
-	// migrate signal/handler out and into core
-	exitchan := make(chan os.Signal, 0)
-	signal.Notify(exitchan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	cfg := cr.Configure()
+	signalingCfg := cr.ConfigureSignaling()
+	reloadingCfg := cr.ConfigureReloading(&cfg)
 
-	reloadchan := make(chan int)
-	if cr.Cfg.Reload {
-		cr.Out("restart enabled; don't panic")
-		go cr.Reloader(reloadchan)
-	}
-	if cr.Cfg.LogFile != "" {
-		cr.Out("enabling logging to %s", cr.Cfg.LogFile)
-		cr.EnableLogging(cr.Cfg.LogFile)
-	}
 	cr.Out("configured %d rails", cr.Cfg.NrRails)
 	for i := 0; i < cr.Cfg.NrRails; i++ {
 		in := cr.Cfg.Incoming[i]
 		out := cr.Cfg.Outgoing[i]
 		cr.Out("rail #%d: %s ==> %s", i, in, out)
 	}
-
-	if !cr.Cfg.Print {
-		cr.Out("disabling printing, no other output will be shown")
-		cr.DisablePrinting()
-	}
+	cr.ConfigureLogging(cr.Cfg)
 	cr.Out("greenline ready")
 
-	var sockets = make([]*goczmq.Sock, 0)
+	var wg sync.WaitGroup
+	var railSentinel = false
+	var rails = make([]*cr.Rail, 0)
 
 	for i := 0; i < cr.Cfg.NrRails; i++ {
 		in := cr.Cfg.Incoming[i]
 		out := cr.Cfg.Outgoing[i]
 		inSock := cr.FirstOrDie(goczmq.NewPull(in)).(*goczmq.Sock)
-		sockets = append(sockets, inSock)
+		inSock.SetRcvhwm(1)
 		outSock := cr.FirstOrDie(goczmq.NewPush(out)).(*goczmq.Sock)
-		sockets = append(sockets, outSock)
-		go handleRail(inSock, outSock)
+		outSock.SetSndhwm(1)
+		rail := cr.MakeRail(i, inSock, outSock)
+		rails = append(rails, &rail)
+		wg.Add(1)
+		go handleRail(&wg, &railSentinel, &rail)
 	}
 
 	var restarting = false
+	var forever = true
 
-For:
 	for {
+		if !forever {
+			break
+		}
 		select {
-		case sig := <-exitchan:
+		case sig := <-signalingCfg.SignalChannel:
 			if sig == nil {
 				continue
 			}
-			if sig == syscall.SIGQUIT {
+			if sig == cr.SIGQUIT {
 				cr.Out("exiting immediately on signal (%s)", sig.String())
 				os.Exit(1)
+			} else if sig == cr.SIGTERM || sig == cr.SIGINT {
+				cr.Out("initiating graceful shutdown on signal (%s)", sig.String())
+				forever = false
+				// break For
+			} else if sig == cr.SIGUSR1 {
+				for _, rail := range rails {
+					rail.DumpStats()
+				}
+			} else if sig == cr.SIGABRT {
+				cr.Out("ABORT")
+				os.Exit(1)
 			}
-			cr.Out("initiating graceful shutdown on signal (%s)", sig.String())
-			break For
-		case _ = <-reloadchan:
+		case _ = <-reloadingCfg.ReloadChannel:
 			cr.Out("new binary available, restarting greenline")
 			restarting = true
-			break For
+			forever = false
+			// break For
 		}
 	}
 
-	signal.Stop(exitchan)
-	for _, socket := range sockets {
-		socket.Destroy()
+	railSentinel = true
+	cr.Out("bringing rails offline")
+	wg.Wait()
+	for _, rail := range rails {
+		rail.Destroy()
 	}
+
+	cr.ShutdownReloading(reloadingCfg)
 	goczmq.Shutdown()
-	close(exitchan)
-	close(reloadchan)
 	cr.ShutdownLogging()
+	cr.ShutdownSignaling(signalingCfg)
 
 	if restarting {
-		// sleep a moment before restarting
+		// sleep a moment (avoids text file busy)
 		cr.SleepMs(250)
 		cr.Restart()
 	}
@@ -116,12 +121,23 @@ For:
 	os.Exit(0)
 }
 
-func handleRail(pull *goczmq.Sock, push *goczmq.Sock) {
+func handleRail(wg *sync.WaitGroup, sentinel *bool, rail *cr.Rail) {
+	poller := cr.FirstOrDie(goczmq.NewPoller()).(*goczmq.Poller)
+	poller.Add(rail.Pull)
+	defer poller.Destroy()
 	for {
-		frame, flag, err := pull.RecvFrame()
-		if err != nil {
-			return
+		if *sentinel {
+			break
 		}
-		push.SendFrame(frame, flag)
+		s := poller.Wait(500)
+		if s == nil {
+			continue
+		}
+		err := rail.RelayMessage()
+		if err != nil {
+			cr.Out("%s", err.Error())
+			break
+		}
 	}
+	wg.Done()
 }
