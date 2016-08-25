@@ -6,4 +6,5 @@ env.sh.custom
 
 build
 pkg
+__pycache__
 
