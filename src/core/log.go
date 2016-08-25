@@ -106,6 +106,7 @@ func Log(msg string, args ...interface{}) {
 // Out calls Print and Log with the arguments and calls os.Exit(1).
 func Out(msg string, args ...interface{}) {
 	Print(msg, args...)
+	Log(msg, args...)
 }
 
 // Outerr prints the arguments to stderr similar to fmt.Printf.
