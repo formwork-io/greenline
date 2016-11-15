@@ -5,6 +5,7 @@ libdeps-debian:
     paths:
       - build/deps/
   script:
+  - apt install build-essential
   - make libdeps 
 
 libdeps-ubuntu:
@@ -14,6 +15,7 @@ libdeps-ubuntu:
     paths:
       - build/deps/
   script:
+  - apt install build-essential
   - make libdeps 
 
 libdeps-centos:
