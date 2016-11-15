@@ -25,5 +25,5 @@ libdeps-centos:
     paths:
       - build/deps/
   script:
-  - yum install make
+  - yum install -y make
   - make libdeps 
