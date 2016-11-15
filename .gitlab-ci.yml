@@ -19,7 +19,7 @@ libdeps-ubuntu:
   - make libdeps 
 
 libdeps-centos:
-  image: centos:latest
+  executor: shell
   stage: build
   cache:
     paths:
