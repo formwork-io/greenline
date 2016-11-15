@@ -1,4 +1,7 @@
 libdeps:
   stage: build
+  cache:
+    paths:
+      - build/deps/
   script:
   - make libdeps 
