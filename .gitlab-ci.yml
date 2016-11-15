@@ -19,10 +19,10 @@ libdeps-ubuntu:
   - make libdeps 
 
 libdeps-centos:
-  executor: shell
   stage: build
   cache:
     paths:
       - build/deps/
   script:
+  - yum install make
   - make libdeps 
