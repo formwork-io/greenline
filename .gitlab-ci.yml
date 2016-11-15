@@ -1,5 +1,5 @@
 libdeps-debian:
-  image: debian/latest
+  image: debian:latest
   stage: build
   cache:
     paths:
@@ -8,7 +8,7 @@ libdeps-debian:
   - make libdeps 
 
 libdeps-ubuntu:
-  image: ubuntu/latest
+  image: ubuntu:latest
   stage: build
   cache:
     paths:
@@ -17,7 +17,7 @@ libdeps-ubuntu:
   - make libdeps 
 
 libdeps-centos:
-  image: centos/latest
+  image: centos:latest
   stage: build
   cache:
     paths:
