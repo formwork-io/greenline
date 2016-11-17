@@ -1,29 +1,5 @@
-libdeps-debian:
-  image: debian:latest
+libdeps:
+  tags: shell
   stage: build
-  cache:
-    paths:
-      - build/deps/
   script:
-  - apt install build-essential
-  - make libdeps 
-
-libdeps-ubuntu:
-  image: ubuntu:latest
-  stage: build
-  cache:
-    paths:
-      - build/deps/
-  script:
-  - apt install build-essential
-  - make libdeps 
-
-libdeps-centos:
-  image: centos:latest
-  stage: build
-  cache:
-    paths:
-      - build/deps/
-  script:
-  - yum install -y make wget pkg-config
-  - make libdeps 
+    - make libdeps
