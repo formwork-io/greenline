@@ -1,5 +1,6 @@
 libdeps:
-  tags: shell
+  tags:
+    - shell
   stage: build
   script:
     - make libdeps
