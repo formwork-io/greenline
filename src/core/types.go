@@ -24,7 +24,7 @@ package grnlcore
 import "fmt"
 import "math"
 import "time"
-import "goczmq-1.0"
+import "goczmq-4.0.1"
 
 // Executable is the complete path to the process executable.
 //

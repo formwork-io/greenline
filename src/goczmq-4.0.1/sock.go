@@ -9,6 +9,11 @@ int Sock_connect(zsock_t *self, const char *format) {return zsock_connect(self, 
 int Sock_disconnect(zsock_t *self, const char *format) {return zsock_disconnect(self, format, NULL);}
 int Sock_bind(zsock_t *self, const char *format) {return zsock_bind(self, format, NULL);}
 int Sock_unbind(zsock_t *self, const char *format) {return zsock_unbind(self, format, NULL);}
+int Sock_sendframe(zsock_t *sock, const void *data, size_t size, int flags) {
+	zframe_t *frame = zframe_new (data, size);
+	int rc = zframe_send (&frame, sock, flags);
+	return rc;
+}
 */
 import "C"
 
@@ -100,7 +105,7 @@ func (s *Sock) Disconnect(endpoint string) error {
 	cEndpoint := C.CString(endpoint)
 	defer C.free(unsafe.Pointer(cEndpoint))
 
-	rc := C.Sock_disconnect(s.zsockT, C.CString(endpoint))
+	rc := C.Sock_disconnect(s.zsockT, cEndpoint)
 	if int(rc) == -1 {
 		return ErrDisconnect
 	}
@@ -124,7 +129,10 @@ func (s *Sock) Bind(endpoint string) (int, error) {
 // Unbind unbinds a socket from an endpoint.  If returns
 // an error if the endpoint was not found
 func (s *Sock) Unbind(endpoint string) error {
-	rc := C.Sock_unbind(s.zsockT, C.CString(endpoint))
+	cEndpoint := C.CString(endpoint)
+	defer C.free(unsafe.Pointer(cEndpoint))
+
+	rc := C.Sock_unbind(s.zsockT, cEndpoint)
 	if int(rc) == -1 {
 		return ErrUnbind
 	}
@@ -255,19 +263,14 @@ func (s *Sock) Pollout() bool {
 // a multi-part message
 func (s *Sock) SendFrame(data []byte, flags int) error {
 	var rc C.int
-
 	if len(data) == 0 {
-		frame := C.zframe_new(unsafe.Pointer(C.CString("")), C.size_t(len(data)))
-		rc = C.zframe_send(&frame, unsafe.Pointer(s.zsockT), C.int(flags))
+		rc = C.Sock_sendframe(s.zsockT, nil, C.size_t(0), C.int(flags))
 	} else {
-		frame := C.zframe_new(unsafe.Pointer(&data[0]), C.size_t(len(data)))
-		rc = C.zframe_send(&frame, unsafe.Pointer(s.zsockT), C.int(flags))
+		rc = C.Sock_sendframe(s.zsockT, unsafe.Pointer(&data[0]), C.size_t(len(data)), C.int(flags))
 	}
-
 	if rc == C.int(-1) {
 		return ErrSendFrame
 	}
-
 	return nil
 }
 

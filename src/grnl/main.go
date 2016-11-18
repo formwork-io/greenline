@@ -25,7 +25,7 @@ package main
 
 import "os"
 import "sync"
-import "goczmq-1.0"
+import "goczmq-4.0.1"
 import cr "core"
 
 func main() {

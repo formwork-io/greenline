@@ -3,10 +3,18 @@
 // services for authentication, service discovery, and creating proxies.
 // GoCZMQ provides direct bindings to CZMQ along with higher level go
 // abstractions such as channels and io.ReadWriter interface support.
+//
+// "Tell them I was a writer.
+//  A maker of software.
+//  A humanist. A father.
+//  And many things.
+//  But above all, a writer.
+//  Thank You. :)
+//  - Pieter Hintjens
 package goczmq
 
 /*
-#cgo !windows pkg-config: libczmq libzmq libsodium
+#cgo !windows pkg-config: --static libczmq libzmq libsodium
 #cgo windows LDFLAGS: -lws2_32 -liphlpapi -lrpcrt4 -lsodium -lzmq -lczmq
 #cgo windows CFLAGS: -Wno-pedantic-ms-format -DLIBCZMQ_EXPORTS -DZMQ_DEFINED_STDINT -DLIBCZMQ_EXPORTS
 
