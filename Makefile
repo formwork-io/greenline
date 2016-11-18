@@ -18,16 +18,12 @@ INSTALL_PROGRAM	= $(INSTALL)
 export GOPATH = $(top)
 SHELL := /usr/bin/env bash
 
-check_defined = \
-    $(strip $(foreach 1,$1, \
-        $(call __check_defined,$1,$(strip $(value 2)))))
-__check_defined = \
-    $(if $(value $1),, \
-      $(error Undefined $1$(if $2, ($2))))
-
 ifndef PKG_CONFIG_PATH
 export PKG_CONFIG_PATH = $(libdepdir)/lib/pkgconfig
 endif
+
+HAVE_PKG_CONFIG := $(shell command -v pkg-config)
+HAVE_GO := $(shell command -v go)
 
 ifndef CFLAGS
 OS := $(shell uname)
@@ -41,14 +37,23 @@ cflags = $(CFLAGS)
 endif
 go_ldflags = -ldflags '--extldflags "$(cflags)"'
 
-all: grnl grnlctl
+all: cmddeps grnl grnlctl
+
+cmddeps:
+ifndef HAVE_PKG_CONFIG
+	$(error "pkg-config is not available")
+endif
+
+ifndef HAVE_GO
+	$(error "go is not available")
+endif
 
 help: ## This help message
 	@echo -e "$$(grep -hE '^\S+:.*##' $(MAKEFILE_LIST) \
 		| sed -e 's/:.*##\s*/:/' -e 's/^\(.\+\):\(.*\)/\1:\2/' \
 		| column -c2 -t -s :)"
 
-$(libdepdir)/.done: env.sh scripts/get-lib-deps.sh
+$(libdepdir)/.done: cmddeps env.sh scripts/get-lib-deps.sh
 	./scripts/get-lib-deps.sh
 
 libdeps: $(libdepdir)/.done ## Get library dependencies via get-lib-deps.sh
