@@ -4,3 +4,4 @@ libdeps:
   stage: build
   script:
     - make libdeps
+    - make
