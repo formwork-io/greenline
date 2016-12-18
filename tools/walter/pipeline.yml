@@ -1,0 +1,7 @@
+pipeline:
+  - name: library dependencies
+    type: command
+    command: make libdeps
+  - name: binaries
+    type: command
+    command: make all

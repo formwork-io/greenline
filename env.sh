@@ -36,6 +36,7 @@ default BUILD           "$DIR"/build
 default src             "$DIR"/src
 default TEST_OUTPUT     "$BUILD/tests"
 default PKG_CONFIG_PATH "$BUILD"/deps/libs/lib/pkgconfig
+default TOOLS           "$DIR"/tools
 
 ### VERSIONS ###
 default GL_SODIUM_VER   "1.0.11"
@@ -49,4 +50,3 @@ default GL_INSTALL_ARGS ""
 ### THE GO SHELL ###
 default GOSH_SCRIPTS    "$DIR"/scripts
 default GOSH_PROMPT     "gosh \e[0;32mgreenline\e[0m (?|#|#?)> "
-
