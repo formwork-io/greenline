@@ -24,6 +24,16 @@ endif
 
 HAVE_PKG_CONFIG := $(shell command -v pkg-config)
 HAVE_GO := $(shell command -v go)
+HAVE_LIBDEPS := $(shell test -r $(libdepdir)/.done && echo 1)
+
+ifndef HAVE_PKG_CONFIG
+$(error "pkg-config is not available")
+endif
+
+ifndef HAVE_GO
+$(error "go is not available")
+endif
+
 
 ifndef CFLAGS
 OS := $(shell uname)
@@ -37,15 +47,11 @@ cflags = $(CFLAGS)
 endif
 go_ldflags = -ldflags '--extldflags "$(cflags)"'
 
-all: cmddeps grnl grnlctl
+all: bindeps grnl grnlctl
 
-cmddeps:
-ifndef HAVE_PKG_CONFIG
-	$(error "pkg-config is not available")
-endif
-
-ifndef HAVE_GO
-	$(error "go is not available")
+bindeps:
+ifndef HAVE_LIBDEPS
+	$(error "Library dependencies not found (run 'make libdeps')")
 endif
 
 help: ## This help message
@@ -53,10 +59,10 @@ help: ## This help message
 		| sed -e 's/:.*##\s*/:/' -e 's/^\(.\+\):\(.*\)/\1:\2/' \
 		| column -c2 -t -s :)"
 
-$(libdepdir)/.done: cmddeps env.sh scripts/get-lib-deps.sh
+$(libdepdir)/.done: env.sh scripts/get-lib-deps.sh
 	./scripts/get-lib-deps.sh
 
-libdeps: $(libdepdir)/.done ## Get library dependencies via get-lib-deps.sh
+libdeps: $(libdepdir)/.done ## Get library dependencies (get-lib-deps.sh)
 
 $(grnl_bin): src/grnl/*.go $(core_object)
 	cd src/grnl && $(go_build) $(go_ldflags) -o $(@)
