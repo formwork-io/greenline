@@ -19,7 +19,7 @@ github_url="https://github.com/jedisct1/libsodium/releases"
 libsodium_url="$github_url/download/$GL_SODIUM_VER/$libsodium_tgz"
 
 zeromq_tgz="zeromq-${GL_ZEROMQ_VER}.tar.gz"
-github_url="https://github.com/zeromq/zeromq4-1/releases"
+github_url="https://github.com/zeromq/libzmq/releases"
 zeromq_url="$github_url/download/v$GL_ZEROMQ_VER/${zeromq_tgz}"
 
 czmq_tgz="czmq-${GL_CZMQ_VER}.tar.gz"

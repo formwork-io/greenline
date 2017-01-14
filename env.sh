@@ -40,8 +40,8 @@ default TOOLS           "$DIR"/tools
 
 ### VERSIONS ###
 default GL_SODIUM_VER   "1.0.11"
-default GL_ZEROMQ_VER   "4.1.6"
-default GL_CZMQ_VER     "4.0.1"
+default GL_ZEROMQ_VER   "4.2.1"
+default GL_CZMQ_VER     "4.0.2"
 
 ### GOLANG ###
 default GL_BUILD_ARGS   "-o $BUILD/greenline"
