@@ -27,5 +27,5 @@ The Name
 Greenline is named after the oldest subway line of the same name in
 Boston, Massachusetts. 
 
-image:extra/images/greenline-128.png[]
+image:extra/logos/greenline-png-128x128.png[]
 
